@@ -53,6 +53,7 @@
 *  POSSIBILITY OF SUCH DAMAGE.
 *
 */
+#include "Tracking.h"
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -474,6 +475,7 @@ ORBextractor::ORBextractor(int _nfeatures,		//指定要提取的特征点数目
     nfeatures(_nfeatures), scaleFactor(_scaleFactor), nlevels(_nlevels),
     iniThFAST(_iniThFAST), minThFAST(_minThFAST)//设置这些参数
 {
+
 	//存储每层图像缩放系数的vector调整为符合图层数目的大小
     mvScaleFactor.resize(nlevels);  
 	//存储这个sigma^2，其实就是每层图像相对初始图像缩放因子的平方
@@ -1049,6 +1051,15 @@ void ORBextractor::ComputeKeyPointsOctTree(
 	//遍历所有图像
     for (int level = 0; level < nlevels; ++level)
     {
+
+  /////////////////////////////自适应阈值滤波,lmf,10.28
+       cv::Scalar mean1;
+	   cv::Mat mImGray_stddev;
+	   cv::meanStdDev(mvImagePyramid[level], mean1, mImGray_stddev);
+       iniThFAST=20+128*mImGray_stddev.at<double>(0,0);
+       minThFAST=128*mImGray_stddev.at<double>(0,0)/2;
+       cout << "- 自适应阈值:iniFast " << iniThFAST<<"       "<<"minFast "<<minThFAST<< endl;
+/////////////////////////////////////////////////////
 		//计算这层图像的坐标边界， NOTICE 注意这里是坐标边界，EDGE_THRESHOLD指的应该是可以提取特征点的有效图像边界，后面会一直使用“有效图像边界“这个自创名词
         const int minBorderX = EDGE_THRESHOLD-3;			//这里的3是因为在计算FAST特征点的时候，需要建立一个半径为3的圆
         const int minBorderY = minBorderX;					//minY的计算就可以直接拷贝上面的计算结果了
@@ -1199,6 +1210,13 @@ void ORBextractor::ComputeKeyPointsOld(
 	//开始遍历所有图层的图像
     for (int level = 0; level < nlevels; ++level)
     {
+          /////////////////////////////自适应阈值滤波,lmf,10.28
+       cv::Scalar mean1;
+	   cv::Mat mImGray_stddev;
+	   cv::meanStdDev(mvImagePyramid[level], mean1, mImGray_stddev);
+       iniThFAST=20+128*mImGray_stddev.at<double>(0,0);
+       minThFAST=128*mImGray_stddev.at<double>(0,0)/2;
+       cout << "- 自适应阈值:iniFast " << iniThFAST<<"       "<<"minFast "<<minThFAST<< endl;
 		//获取每层图像希望提取出来的特征点
         const int nDesiredFeatures = mnFeaturesPerLevel[level];
 

@@ -167,18 +167,18 @@ Tracking::Tracking(
     // 尺度金字塔的层数 8
     int nLevels = fSettings["ORBextractor.nLevels"];
     // 提取fast特征点的默认阈值 20
-   // int fIniThFAST = fSettings["ORBextractor.iniThFAST"];
+    int fIniThFAST = fSettings["ORBextractor.iniThFAST"];
     // 如果默认阈值提取不出足够fast特征点，则使用最小阈值 8
-   // int fMinThFAST = fSettings["ORBextractor.minThFAST"];
+    int fMinThFAST = fSettings["ORBextractor.minThFAST"];
 
         ///////λ图像标准偏差计算,自适应阈值,lmf,10.28
-    cv::Scalar mean1;
-	cv::Mat mImGray_stddev;
-	cv::meanStdDev(mImGray, mean1, mImGray_stddev);
+    // cv::Scalar mean1;
+	// cv::Mat mImGray_stddev;
+	// cv::meanStdDev(mImGray, mean1, mImGray_stddev);
     // 提取fast特征点的默认阈值 20+w*λ
-    int fIniThFAST = 20+128*mImGray_stddev.at<double>(0,0);
+   // int fIniThFAST = 20+128*mImGray_stddev.at<double>(0,0);
     // 如果默认阈值提取不出足够fast特征点，则使用最小阈值 w*λ/2
-    int fMinThFAST = 128*mImGray_stddev.at<double>(0,0)/2;
+   // int fMinThFAST = 128*mImGray_stddev.at<double>(0,0)/2;
 
     // tracking过程都会用到mpORBextractorLeft作为特征点提取器
     mpORBextractorLeft = new ORBextractor(
