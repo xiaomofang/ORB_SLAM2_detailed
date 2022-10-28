@@ -167,9 +167,18 @@ Tracking::Tracking(
     // 尺度金字塔的层数 8
     int nLevels = fSettings["ORBextractor.nLevels"];
     // 提取fast特征点的默认阈值 20
-    int fIniThFAST = fSettings["ORBextractor.iniThFAST"];
+   // int fIniThFAST = fSettings["ORBextractor.iniThFAST"];
     // 如果默认阈值提取不出足够fast特征点，则使用最小阈值 8
-    int fMinThFAST = fSettings["ORBextractor.minThFAST"];
+   // int fMinThFAST = fSettings["ORBextractor.minThFAST"];
+
+        ///////λ图像标准偏差计算,自适应阈值,lmf,10.28
+    cv::Scalar mean1;
+	cv::Mat mImGray_stddev;
+	cv::meanStdDev(mImGray, mean1, mImGray_stddev);
+    // 提取fast特征点的默认阈值 20+w*λ
+    int fIniThFAST = 20+128*mImGray_stddev.at<double>(0,0);
+    // 如果默认阈值提取不出足够fast特征点，则使用最小阈值 w*λ/2
+    int fMinThFAST = 128*mImGray_stddev.at<double>(0,0)/2;
 
     // tracking过程都会用到mpORBextractorLeft作为特征点提取器
     mpORBextractorLeft = new ORBextractor(
@@ -274,6 +283,53 @@ cv::Mat Tracking::GrabImageStereo(
             cvtColor(imGrayRight,imGrayRight,CV_BGRA2GRAY);
         }
     }
+    ///////////////////////1.伽马变换-----lmf10.28
+   cv:: Mat imageGamma_l,dist_l,imageGamma_r,dist_r,mImGray_gmask, imGrayRight_gmask;
+	//灰度归一化
+	mImGray.convertTo(imageGamma_l, CV_64F, 1.0 / 255, 0);
+    imGrayRight.convertTo(imageGamma_r, CV_64F, 1.0 / 255, 0);
+	//伽马变换
+	double gamma = 1.5;
+	pow(imageGamma_l, gamma, dist_l);//dist 要与imageGamma有相同的数据类型
+    pow(imageGamma_r, gamma, dist_r);//dist 要与imageGamma有相同的数据类型
+	dist_l.convertTo(mImGray_gmask, CV_8U, 255, 0);
+    dist_r.convertTo( imGrayRight_gmask, CV_8U, 255, 0);
+
+    /////////////////////////2.图像锐化-------低通滤波器------lmf10.28
+    cv:: Mat mImGray_Tmask, imGrayRight_Tmask;
+    cv::GaussianBlur(mImGray, mImGray_Tmask, cv::Size(5,5), 1.5);
+    cv::GaussianBlur(imGrayRight, imGrayRight_Tmask, cv::Size(5,5), 1.5);
+
+    ///////3.λ图像标准偏差计算
+    cv::Scalar mean1;
+	cv::Scalar mean2;
+	cv::Mat mImGray_stddev;
+	cv::Mat imGrayRight_stddev;
+	cv::meanStdDev(mImGray, mean1, mImGray_stddev);
+	cv::meanStdDev(imGrayRight, mean2, imGrayRight_stddev);
+    cout << "- 图像标准差: " << mImGray_stddev.at<double>(0,0) << endl;
+
+    ///////图像掩模函数
+    if(mImGray_stddev.at<double>(0,0)>0.25)
+    {
+        mImGray=mImGray+1.0*mImGray_gmask;
+    }
+    else
+    {
+        mImGray=mImGray+1.0*mImGray_gmask+0.3*mImGray_Tmask;
+    }
+
+    if(imGrayRight_stddev.at<double>(0,0)>0.25)
+    {
+        imGrayRight=imGrayRight+1.0*imGrayRight_gmask;
+    }
+    else
+    {
+        imGrayRight=imGrayRight+1.0*imGrayRight_gmask+0.3*imGrayRight_Tmask;
+    }
+
+        ///////////////lmf,修改结束
+
 
     // Step 2 ：构造Frame
     mCurrentFrame = Frame(
@@ -322,6 +378,37 @@ cv::Mat Tracking::GrabImageRGBD(
         else
             cvtColor(mImGray,mImGray,CV_BGRA2GRAY);
     }
+
+        ///////////////////////1.伽马变换-----lmf10.28
+   cv:: Mat imageGamma_l,dist_l,mImGray_gmask;
+	//灰度归一化
+	mImGray.convertTo(imageGamma_l, CV_64F, 1.0 / 255, 0);
+
+	//伽马变换
+	double gamma = 1.5;
+	pow(imageGamma_l, gamma, dist_l);//dist 要与imageGamma有相同的数据类型
+	dist_l.convertTo(mImGray_gmask, CV_8U, 255, 0);
+
+
+    /////////////////////////2.图像锐化-------低通滤波器------lmf10.28
+    cv:: Mat mImGray_Tmask;
+    cv::GaussianBlur(mImGray, mImGray_Tmask, cv::Size(5,5), 1.5);
+    ///////3.λ图像标准偏差计算
+    cv::Scalar mean1;
+	cv::Mat mImGray_stddev;
+	cv::meanStdDev(mImGray, mean1, mImGray_stddev);
+    cout << "- 图像标准差: " << mImGray_stddev.at<double>(0,0) << endl;
+    ///////图像掩模函数
+    if(mImGray_stddev.at<double>(0,0)>0.25)
+    {
+        mImGray=mImGray+1.0*mImGray_gmask;
+    }
+    else
+    {
+        mImGray=mImGray+1.0*mImGray_gmask+0.3*mImGray_Tmask;
+    }
+
+    ///////////////lmf,修改结束
 
     // step 2 ：将深度相机的disparity转为Depth , 也就是转换成为真正尺度下的深度
     if((fabs(mDepthMapFactor-1.0f)>1e-5) || imDepth.type()!=CV_32F)
@@ -381,6 +468,37 @@ cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im,const double &timestamp)
         else
             cvtColor(mImGray,mImGray,CV_BGRA2GRAY);
     }
+
+            ///////////////////////1.伽马变换-----lmf10.28
+   cv:: Mat imageGamma_l,dist_l,mImGray_gmask;
+	//灰度归一化
+	mImGray.convertTo(imageGamma_l, CV_64F, 1.0 / 255, 0);
+
+	//伽马变换
+	double gamma = 1.5;
+	pow(imageGamma_l, gamma, dist_l);//dist 要与imageGamma有相同的数据类型
+	dist_l.convertTo(mImGray_gmask, CV_8U, 255, 0);
+
+
+    /////////////////////////2.图像锐化-------低通滤波器------lmf10.28
+    cv:: Mat mImGray_Tmask;
+    cv::GaussianBlur(mImGray, mImGray_Tmask, cv::Size(5,5), 1.5);
+    ///////3.λ图像标准偏差计算
+    cv::Scalar mean1;
+	cv::Mat mImGray_stddev;
+	cv::meanStdDev(mImGray, mean1, mImGray_stddev);
+    cout << "- 图像标准差: " << mImGray_stddev.at<double>(0,0)<< endl;
+    ///////图像掩模函数
+    if(mImGray_stddev.at<double>(0,0)>0.25)
+    {
+        mImGray=mImGray+1.0*mImGray_gmask;
+    }
+    else
+    {
+        mImGray=mImGray+1.0*mImGray_gmask+0.3*mImGray_Tmask;
+    }
+
+    ///////////////lmf,修改结束
 
     // Step 2 ：构造Frame
     //判断该帧是不是初始化

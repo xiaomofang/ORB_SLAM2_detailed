@@ -39,21 +39,21 @@ DepthMapFactor: 5000.0
 #--------------------------------------------------------------------------------------------
 
 # ORB Extractor: Number of features per image,特征点数量
-ORBextractor.nFeatures: 1000
+ORBextractor.nFeatures: 5000
 
 # ORB Extractor: Scale factor between levels in the scale pyramid 	相邻层图像的比例系数
 ORBextractor.scaleFactor: 1.2
 
-# ORB Extractor: Number of levels in the scale pyramid	构造金字塔的层数
+# ORB Extractor: Number of levels in the scale pyramid	构造金字塔的层数,8
 ORBextractor.nLevels: 8
 
 # ORB Extractor: Fast threshold
 # Image is divided in a grid. At each cell FAST are extracted imposing a minimum response.
 # Firstly we impose iniThFAST. If no corners are detected we impose a lower value minThFAST
 # You can lower these values if your images have low contrast
-###检测角点的阈值			
+###检测角点的阈值,20			
 ORBextractor.iniThFAST: 20
-###没有检测到角点的前提下降低阈值
+###没有检测到角点的前提下降低阈值,7
 ORBextractor.minThFAST: 7
 
 #--------------------------------------------------------------------------------------------
