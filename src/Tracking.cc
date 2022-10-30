@@ -307,10 +307,10 @@ cv::Mat Tracking::GrabImageStereo(
 	cv::Mat imGrayRight_stddev;
 	cv::meanStdDev(mImGray, mean1, mImGray_stddev);
 	cv::meanStdDev(imGrayRight, mean2, imGrayRight_stddev);
-    cout << "- 图像标准差: " << mImGray_stddev.at<double>(0,0) << endl;
-
+    double stddev=mImGray_stddev.at<double>(0,0)/255;
+    cout << "- 左图像标准差: " << stddev << endl;
     ///////图像掩模函数
-    if(mImGray_stddev.at<double>(0,0)>0.25)
+    if(stddev>0.25)
     {
         mImGray=mImGray+1.0*mImGray_gmask;
     }
@@ -318,8 +318,10 @@ cv::Mat Tracking::GrabImageStereo(
     {
         mImGray=mImGray+1.0*mImGray_gmask+0.3*mImGray_Tmask;
     }
+    double stddev_r=imGrayRight_stddev.at<double>(0,0)/255;
+    cout << "- 右图像标准差: " << stddev << endl;
 
-    if(imGrayRight_stddev.at<double>(0,0)>0.25)
+    if(stddev_r>0.25)
     {
         imGrayRight=imGrayRight+1.0*imGrayRight_gmask;
     }
@@ -397,9 +399,10 @@ cv::Mat Tracking::GrabImageRGBD(
     cv::Scalar mean1;
 	cv::Mat mImGray_stddev;
 	cv::meanStdDev(mImGray, mean1, mImGray_stddev);
-    cout << "- 图像标准差: " << mImGray_stddev.at<double>(0,0) << endl;
+    double stddev=mImGray_stddev.at<double>(0,0)/255;
+    cout << "- 图像标准差: " << stddev << endl;
     ///////图像掩模函数
-    if(mImGray_stddev.at<double>(0,0)>0.25)
+    if(stddev>0.25)
     {
         mImGray=mImGray+1.0*mImGray_gmask;
     }
@@ -487,9 +490,10 @@ cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im,const double &timestamp)
     cv::Scalar mean1;
 	cv::Mat mImGray_stddev;
 	cv::meanStdDev(mImGray, mean1, mImGray_stddev);
-    cout << "- 图像标准差: " << mImGray_stddev.at<double>(0,0)<< endl;
+    double stddev=mImGray_stddev.at<double>(0,0)/255;
+    cout << "- 图像标准差: " << stddev << endl;
     ///////图像掩模函数
-    if(mImGray_stddev.at<double>(0,0)>0.25)
+    if(stddev>0.25)
     {
         mImGray=mImGray+1.0*mImGray_gmask;
     }

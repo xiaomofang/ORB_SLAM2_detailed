@@ -1216,8 +1216,8 @@ void ORBextractor::ComputeKeyPointsOld(
 	   cv::meanStdDev(mvImagePyramid[level], mean1, mImGray_stddev);
     //    iniThFAST=20+128*mImGray_stddev.at<double>(0,0);
     //    minThFAST=128*mImGray_stddev.at<double>(0,0)/2;
-       iniThFAST=20+mImGray_stddev.at<double>(0,0)-60;
-       minThFAST=(mImGray_stddev.at<double>(0,0)-60)/2;
+       iniThFAST=20+128*mImGray_stddev.at<double>(0,0)/255;
+       minThFAST=128*(mImGray_stddev.at<double>(0,0)-60)/255/2;
        cout << "- 自适应阈值:iniFast " << iniThFAST<<"       "<<"minFast "<<minThFAST<< endl;
 		//获取每层图像希望提取出来的特征点
         const int nDesiredFeatures = mnFeaturesPerLevel[level];
