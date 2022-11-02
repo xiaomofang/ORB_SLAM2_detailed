@@ -387,7 +387,7 @@ cv::Mat Tracking::GrabImageRGBD(
 	mImGray.convertTo(imageGamma_l, CV_64F, 1.0 / 255, 0);
 
 	//伽马变换
-	double gamma = 1.5;
+	double gamma = 0.5;//1.5
 	pow(imageGamma_l, gamma, dist_l);//dist 要与imageGamma有相同的数据类型
 	dist_l.convertTo(mImGray_gmask, CV_8U, 255, 0);
 
@@ -404,11 +404,11 @@ cv::Mat Tracking::GrabImageRGBD(
     ///////图像掩模函数
     if(stddev>0.25)
     {
-        mImGray=mImGray+1.0*mImGray_gmask;
+        mImGray=mImGray+0.5*mImGray_gmask;
     }
     else
     {
-        mImGray=mImGray+1.0*mImGray_gmask+0.3*mImGray_Tmask;
+        mImGray=mImGray+0.5*mImGray_gmask+0.3*mImGray_Tmask;
     }
 
     ///////////////lmf,修改结束
@@ -475,17 +475,17 @@ cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im,const double &timestamp)
             ///////////////////////1.伽马变换-----lmf10.28
    cv:: Mat imageGamma_l,dist_l,mImGray_gmask;
 	//灰度归一化
-	mImGray.convertTo(imageGamma_l, CV_64F, 1.0 / 255, 0);
+	mImGray.convertTo(imageGamma_l, CV_64F, 1.0 / 255, 0);//step1,像素值归一化
 
 	//伽马变换
-	double gamma = 1.5;
-	pow(imageGamma_l, gamma, dist_l);//dist 要与imageGamma有相同的数据类型
-	dist_l.convertTo(mImGray_gmask, CV_8U, 255, 0);
+	double gamma =2.0;///1.5
+	pow(imageGamma_l, gamma, dist_l);//dist 要与imageGamma有相同的数据类型，step2,伽马补偿
+	dist_l.convertTo(mImGray_gmask, CV_8U, 255, 0);//反归一化
 
 
     /////////////////////////2.图像锐化-------低通滤波器------lmf10.28
     cv:: Mat mImGray_Tmask;
-    cv::GaussianBlur(mImGray, mImGray_Tmask, cv::Size(5,5), 1.5);
+    cv::GaussianBlur(mImGray, mImGray_Tmask, cv::Size(5,5), 3);// cv::Size(5,5), 1.5)
     ///////3.λ图像标准偏差计算
     cv::Scalar mean1;
 	cv::Mat mImGray_stddev;
@@ -495,11 +495,11 @@ cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im,const double &timestamp)
     ///////图像掩模函数
     if(stddev>0.25)
     {
-        mImGray=mImGray+1.0*mImGray_gmask;
+        mImGray=mImGray+0.5*mImGray_gmask;
     }
     else
     {
-        mImGray=mImGray+1.0*mImGray_gmask+0.3*mImGray_Tmask;
+        mImGray=mImGray+0.5*mImGray_gmask+0.3*mImGray_Tmask;
     }
 
     ///////////////lmf,修改结束
